@@ -1,5 +1,4 @@
 from http import client
-from sqlite3 import connect
 from pymongo import * 
 import logging
 
@@ -31,8 +30,16 @@ def get_data(mongo_url, database, collection):
     if database in client.list_database_names():
         if collection in client[database].list_collection_names():
             return client[database][collection].find()
+    logging.error(f"Problems getting the data")
 
 def make_query(mongo_url, database, collection, query):
     client = connect_db(mongo_url)
     return client[database][collection].find(query)
 
+def update_data(mongo_url, database, collection, query, update_for):
+    client = connect_db(mongo_url)
+    try:
+        client[database][collection].update_one(query, update_for)
+        logging.info("Data updated")
+    except Exception as e:
+        logging.error(f"Couldn't update the database {e}")

@@ -1,0 +1,4 @@
+pymongo
+django
+fastapi[all]
+uvicorn
