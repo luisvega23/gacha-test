@@ -55,8 +55,3 @@ class Servant(BaseModel):
     bondCE: BondCE
     attribute: str
     alignment: str
-    # name: str
-    # description: Optional[str] = None
-    # price: float
-    # tax: Optional[float] = None
-    

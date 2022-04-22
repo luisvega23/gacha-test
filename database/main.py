@@ -1,35 +1,56 @@
 from fastapi import FastAPI
 from mymodels.servant import Servant
+from mymodels.user import User
 
 import utils.connection as db
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 
 app = FastAPI()
+
 
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
 
-# @app.get("/items/")
-# async def read_item(skip: int = 0, limit: int = 10):
-#     return fake_items_db[skip : skip + limit]
 
-# @app.post("/items/")
-# async def create_item(item: Item):
-#     item_dict = item.dict()
-#     print(item_dict)
-#     return item_dict["price"] + item_dict["tax"]
+@app.post("/")
+async def test_post(user: dict):
+    print(user)
+    print(User(**user))
 
 
-@app.get("/{database}/{collection}")
+@app.get("/get/{database}/{collection}")
 async def get_data(database, collection):
-    mongo_url = "mongodb://localhost:27017/"
-    data = db.get_data(mongo_url, database, collection)[0]
-    data.pop("_id", None)
-    return data
+    try:
+        mongo_url = "mongodb://localhost:27017/"
+        data_list = db.get_data(mongo_url, database, collection)
+        response = []
+        for data in list(data_list):
+            data.pop("_id", None)
+            response.append(data)
+        return response
+    except Exception as e:
+        logging.error(f"Error getting the data {e}")
 
-@app.post("/{database}/{collection}")
-async def post_data(database, collection, servant: Servant):
+
+@app.post("/edit/{userId}")
+async def edit_servants_user(userId, data: dict):
     mongo_url = "mongodb://localhost:27017/"
-    db.add_data(mongo_url, database, collection, [servant.dict()])
-    return {"response":"Done"}
+    user = db.make_query(mongo_url, "db", "user", {"userId": userId})
+    servants = user[0]["servants"]
+    servants.append(data)
+    db.update_data(mongo_url, "db", "user",
+                   {"servants": user[0]["servants"]}, {"$set": {"servants": servants}})
+
+
+@app.post("/add/{database}/{collection}")
+async def post_data(database, collection, data: dict):
+    try:
+        mongo_url = "mongodb://localhost:27017/"
+        db.add_data(mongo_url, database, collection, [data])
+        return {"response": "Done"}
+    except Exception as e:
+        logging.error(f"Error adding the data {e}")
